@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import uuid
+from tempfile import gettempdir
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -256,7 +257,7 @@ async def upload(
     if suffix not in {".pdf", ".txt", ".md"}:
         raise HTTPException(status_code=400, detail="Only .pdf, .txt, .md are supported")
 
-    uploads_dir = Path(__file__).parent / "uploads"
+    uploads_dir = Path(gettempdir()) / "rag_uploads"
     uploads_dir.mkdir(parents=True, exist_ok=True)
     saved_name = f"{uuid.uuid4().hex}{suffix}"
     saved_path = uploads_dir / saved_name
@@ -274,6 +275,10 @@ async def upload(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         )
+        try:
+            saved_path.unlink(missing_ok=True)
+        except Exception:
+            pass
         return {
             "ok": True,
             "collection_name": result["collection_name"],
@@ -327,7 +332,7 @@ def ask(payload: AskRequest):
         source = None
         if isinstance(getattr(item, "metadata", None), dict):
             page_label = item.metadata.get("page_label") or item.metadata.get("page")
-            source = item.metadata.get("source")
+            source = item.metadata.get("original_filename") or item.metadata.get("source")
         context_parts.append(
             f"Page Number: {page_label}\nSource: {source}\nContent:\n{item.page_content}"
         )
