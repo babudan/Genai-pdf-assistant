@@ -72,7 +72,6 @@ pypdf==6.10.2
 python-dotenv==1.2.2
 python-multipart==0.0.27
 python-stdnum==2.2
-pywin32==311
 PyYAML==6.0.3
 qdrant-client==1.17.1
 regex==2026.4.4
